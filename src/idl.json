@@ -1,0 +1,161 @@
+{
+    "version": "0.1.0",
+    "name": "myepicproject",
+    "instructions": [
+      {
+        "name": "startStuffOff",
+        "accounts": [
+          {
+            "name": "baseAccount",
+            "isMut": true,
+            "isSigner": true
+          },
+          {
+            "name": "user",
+            "isMut": true,
+            "isSigner": true
+          },
+          {
+            "name": "systemProgram",
+            "isMut": false,
+            "isSigner": false
+          }
+        ],
+        "args": []
+      },
+      {
+        "name": "placeBet",
+        "accounts": [
+          {
+            "name": "baseAccount",
+            "isMut": true,
+            "isSigner": false
+          },
+          {
+            "name": "from",
+            "isMut": true,
+            "isSigner": true
+          },
+          {
+            "name": "to",
+            "isMut": true,
+            "isSigner": false
+          },
+          {
+            "name": "systemProgram",
+            "isMut": false,
+            "isSigner": false
+          }
+        ],
+        "args": [
+          {
+            "name": "pred",
+            "type": "u8"
+          },
+          {
+            "name": "strStakeBal",
+            "type": "string"
+          }
+        ]
+      },
+      {
+        "name": "compareBet",
+        "accounts": [
+          {
+            "name": "baseAccount",
+            "isMut": true,
+            "isSigner": false
+          }
+        ],
+        "args": [
+          {
+            "name": "data",
+            "type": "u8"
+          }
+        ]
+      },
+      {
+        "name": "resultBet",
+        "accounts": [
+          {
+            "name": "baseAccount",
+            "isMut": true,
+            "isSigner": false
+          },
+          {
+            "name": "from",
+            "isMut": true,
+            "isSigner": true
+          },
+          {
+            "name": "to",
+            "isMut": true,
+            "isSigner": false
+          },
+          {
+            "name": "systemProgram",
+            "isMut": false,
+            "isSigner": false
+          }
+        ],
+        "args": []
+      }
+    ],
+    "accounts": [
+      {
+        "name": "BaseAccount",
+        "type": {
+          "kind": "struct",
+          "fields": [
+            {
+              "name": "currentBet",
+              "type": {
+                "defined": "BetStruct"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "name": "PoolWallet",
+        "type": {
+          "kind": "struct",
+          "fields": [
+            {
+              "name": "balance",
+              "type": "u64"
+            }
+          ]
+        }
+      }
+    ],
+    "types": [
+      {
+        "name": "BetStruct",
+        "type": {
+          "kind": "struct",
+          "fields": [
+            {
+              "name": "boolWinner",
+              "type": "bool"
+            },
+            {
+              "name": "stakeBal",
+              "type": "u64"
+            },
+            {
+              "name": "pred",
+              "type": "u8"
+            },
+            {
+              "name": "userAddress",
+              "type": "publicKey"
+            }
+          ]
+        }
+      }
+    ],
+    "metadata": {
+      "address": "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+    }
+  }

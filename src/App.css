@@ -1,0 +1,29 @@
+body {
+  background-color: #000;
+}
+
+
+hr {
+  margin: auto 20px;
+  border: 1.5px solid rgb(10,10,10);
+}
+
+.text {
+  margin: auto 0;
+  font-size: 22px;
+  text-align: center;
+  color: rgb(10,10,10);
+}
+.wallet {
+  margin: 0 0 0 1em;
+  font-size: 12px;
+  color: rgb(10,10,10);
+}
+.bet {
+  text-align: center;
+  margin-top: 2em;
+  /* border-color: black; */
+  /* width: 100px;
+  height: 100px;
+  background-color: red; */
+}
