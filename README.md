@@ -111,4 +111,6 @@ See the section about [deployment](https://facebook.github.io/create-react-app/d
 
             poolWallet = ""
 
+    3. To start the betting, please airdrop some sol into the admin wallet
+
     
