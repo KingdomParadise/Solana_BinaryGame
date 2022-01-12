@@ -7,7 +7,7 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 #[program]
 pub mod myepicproject {
     
-    use anchor_lang::solana_program::{program::invoke,program::invoke_signed, system_instruction::transfer};
+    use anchor_lang::solana_program::{program::invoke,program::invoke_unchecked, system_instruction::transfer};
     use super::*;
 
     pub fn start_stuff_off(ctx: Context<StartStuffOff>) -> ProgramResult {
@@ -109,10 +109,10 @@ pub struct SendSol<'info> {
     #[account(mut)]
     pub base_account: Account<'info, BaseAccount>,
     #[account(mut)]
-    from: Signer<'info>,
+    pub from: Signer<'info>,
     #[account(mut)]
-    to: AccountInfo<'info>,
-    system_program: Program<'info, System>,
+    pub to: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
 }
 
 

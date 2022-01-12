@@ -39,40 +39,22 @@ const main = async() => {
   })
   console.log('Success!')
 
-  // tx = await program.rpc.placeBet(1,'1000000000', {
-  //   accounts: {
-  //     baseAccount:baseAccount.publicKey,
-  //     from: poolWallet.publicKey,
-  //     to: provider.wallet.publicKey,
-  //     systemProgram: SystemProgram.programId,
-  //   },
-  // })
-  // console.log('Success!')
-
   let account = await program.account.baseAccount.fetch(baseAccount.publicKey);  
   console.log("bet vec->", account.currentBet.boolWinner);
+
+  tx = await program.rpc.resultBet({
+    accounts: {
+      baseAccount:baseAccount.publicKey,
+      from: poolWallet.publicKey,
+      to: provider.wallet.publicKey,
+      systemProgram: SystemProgram.programId,
+    },
+    signers:  [poolWallet],
+  })
+  console.log('Success!')
+
+
   
-
-  // const tx1 = await program.rpc.compareBet({
-  //   accounts: {
-  //     baseAccount: baseAccount.publicKey,
-  //   }
-  // });
-  // console.log(tx1);
-  // await program.rpc.result_bet({
-  //   accounts: {
-  //     baseAccount: baseAccount.publicKey,
-  //   }
-  // });
-  // // await program.rpc.placeBet("winner 1",1,125,"user",  {
-  // //   accounts: {
-  // //     baseAccount: baseAccount.publicKey,
-  // //   }
-  // // })
-
-  // account = await program.account.baseAccount.fetch(baseAccount.publicKey);
-  // console.log(account1.publicKey);
-  // console.log(account2.publicKey);
 };
 
 const runMain = async () => {
