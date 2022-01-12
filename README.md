@@ -5,6 +5,7 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 ## Available Scripts
 
 In the project directory, you can run:
+### `npm install`
 
 ### `npm start`
 
@@ -29,9 +30,10 @@ Your app is ready to be deployed!
 
 See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
-# How to deploy the smart contract 
+# How to deploy the Program
 
 ## install the solana env
+
  1. Installing Rust
     
     $ curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
@@ -50,7 +52,7 @@ See the section about [deployment](https://facebook.github.io/create-react-app/d
 
         cargo install --git https://github.com/project-serum/anchor anchor-cli --locked
 
- 5. Deploy the program to the devnet
+## Deploy the program to the devnet
    
     First, switch to devnet:
 
@@ -100,5 +102,13 @@ See the section about [deployment](https://facebook.github.io/create-react-app/d
     🚀 Deploy to devnet!
 
         anchor deploy
+
+## set the admin wallet
+
+    1. create an phantom wallet of admin
+   
+    2. Copy the wallet public address and paste it into the env file
+
+            poolWallet = ""
 
     
