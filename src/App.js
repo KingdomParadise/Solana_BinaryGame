@@ -118,14 +118,18 @@ function App() {
         },
     });
     //result of the bet
+    let enc = new TextEncoder();
+    let seeds_array = enc.encode(process.env.poolWallet);
+    const poolWallet = Keypair.fromSeed(seeds_array);
+
     await program.rpc.resultBet({
     accounts: {
         baseAccount:baseAccount.publicKey,
-        from: process.env.poolWallet,
+        from: poolWallet.publicKey,
         to: provider.wallet.publicKey,
         systemProgram: SystemProgram.programId,
     },
-    signers:  [process.env.poolWallet],
+    signers:  [poolWallet],
     })
 
 
