@@ -7,7 +7,7 @@ import Container from 'react-bootstrap/Container';
 import Left from './images/left.png';
 import Right from './images/right.png';
 import Vs from './images/vs.jpeg';
-
+import kp from './keypair.json'
 
 import idl from './idl.json';
 import { Connection,  clusterApiUrl, PublicKey } from '@solana/web3.js';
@@ -16,8 +16,13 @@ import { Program, Provider, web3 } from '@project-serum/anchor';
 const { SystemProgram, Keypair, LAMPORTS_PER_SOL } = web3;
 
 // Create a keypair for the account that will hold the betting data.
-let baseAccount = Keypair.generate();
+const arr = Object.values(kp._keypair.secretKey);
+const secret = new Uint8Array(arr);
+const poolWallet = web3.Keypair.fromSecretKey(secret);
 
+window.Buffer = window.Buffer || require('buffer').Buffer;
+
+let baseAccount = Keypair.generate();
 // Get our program's id from the IDL file.
 const programID = new PublicKey(idl.metadata.address);
 
@@ -34,7 +39,8 @@ function App() {
   const [walletAddress, setWalletAddress] = useState(null);
   const [stake_bal, setSelectedStakeBalance] = useState(null);
   const [balance, getWalletBalance] = useState(null);
-  const [pred, setPrediction] = useState();
+  const [pred, setPrediction] = useState(null);
+  const [boolBaseAccount, setBaseAccount] = useState(false);
   //check if the phantom wallet is connected
   const checkIfWalletIsConnected = async () => {
     try {
@@ -57,24 +63,39 @@ function App() {
   const connectWallet = async () => {
     await checkIfWalletIsConnected();
     //get the balance of user's wallet
+    // await createBetAccount();
+    await getBalance();
+  };
+
+  const getBalance = async () => {
     const connection = new Connection(network, opts.preflightCommitment);
-    const provider = new Provider(connection, window.solana, opts.preflightCommitment,);
+    const provider = getProvider();
     const publicKey = provider.wallet.publicKey;
     const balanceOfwallet = await connection.getBalance(publicKey);
-    getWalletBalance(balanceOfwallet);
-    //create a baseAccount to save the current bet
-    const program = new Program(idl, programID, provider);
-    console.log("ping");
-    await program.rpc.startStuffOff({
-    accounts: {
-        baseAccount: baseAccount.publicKey,
-        user: provider.wallet.publicKey,
-        systemProgram: SystemProgram.programId,
-    },
-    signers: [baseAccount]
-    });
-    console.log("Created a new BaseAccount w/ address:", baseAccount.publicKey.toString());
-  };
+    getWalletBalance(balanceOfwallet / LAMPORTS_PER_SOL);
+  }
+
+  const createBetAccount = async () => {
+    try {
+      const provider = getProvider();
+      const program = new Program(idl, programID, provider);
+      console.log("ping");
+      setBaseAccount(true);
+
+      await program.rpc.startStuffOff({
+        accounts: {
+          baseAccount: baseAccount.publicKey,
+          user: provider.wallet.publicKey,
+          systemProgram: SystemProgram.programId,
+        },
+        signers: [baseAccount]
+      });
+      console.log("Created a new BaseAccount w/ address:", baseAccount.publicKey.toString());
+  
+    } catch(error) {
+      console.log("Error creating BaseAccount account:", error);
+    }
+  }
 
   const renderNotConnectedContainer = () => (
     <Button variant="outline-success"
@@ -92,56 +113,78 @@ function App() {
   const placeBet = async () => {
     const provider = getProvider();
     const program = new Program(idl, programID, provider);
+
     //setting the betting value
-    await program.rpc.placeBet(pred,(stake_bal * LAMPORTS_PER_SOL).toString, {
+    console.log(poolWallet.publicKey.toString());
+    await program.rpc.placeBet(pred,(stake_bal * LAMPORTS_PER_SOL).toString(), {
         accounts: {
             baseAccount:baseAccount.publicKey,
             from: provider.wallet.publicKey,
-            to: process.env.poolWallet,
+            // to: poolWalletPubickey,
+            to: poolWallet.publicKey,
             systemProgram: SystemProgram.programId,
         },
     });
 
+    await getBalance();
+
     const min = 0;
     const max = 1;
     let rand = min + Math.random() * (max - min);
-
+    // it needs to update in the future 
     if (rand<=0.5){
         rand = 0;
     } else {
         rand = 1;
     }
+    console.log("rand->",rand);
+    console.log("pred->",pred);
     //generating the random number and sending to the program
-    await program.rpc.compareBet(rand, {
+    let tx = await program.rpc.compareBet(rand, {
         accounts: {
           baseAccount:baseAccount.publicKey,
         },
     });
-    //result of the bet
-    let enc = new TextEncoder();
-    let seeds_array = enc.encode(process.env.poolWallet);
-    const poolWallet = Keypair.fromSeed(seeds_array);
+    console.log(tx);
 
-    await program.rpc.resultBet({
-    accounts: {
-        baseAccount:baseAccount.publicKey,
-        from: poolWallet.publicKey,
-        to: provider.wallet.publicKey,
-        systemProgram: SystemProgram.programId,
-    },
-    signers:  [poolWallet],
-    })
+    let account = await program.account.baseAccount.fetch(baseAccount.publicKey);
+    console.log(account.currentBet);
+    //result of the bet and fixing this part now
+    // let tx2 = await program.rpc.resultBet({
+    // accounts: {
+    //     baseAccount:baseAccount.publicKey,
+    //     from: poolWallet.publicKey,
+    //     to: provider.wallet.publicKey,
+    //     systemProgram: SystemProgram.programId,
+    // },
+    // signers:  [poolWallet],
+    // });
 
+    // console.log(tx2);
+
+    await getBalance();
 
   }
 
-  const renderConnectedContainer = () => (
-    <div className="wallet">
+  const renderConnectedContainer = () => {
+    if (boolBaseAccount === false) {
+      return (
+        <div className="connected-container">
+          <button variant="outline-danger" onClick={createBetAccount}>
+            Do One-Time Initialization For Bet Program Account
+          </button>
+        </div>
+      )
+    } else {
+      return (
+        <div className="wallet">
         <span>wallet: {walletAddress}</span>
         <p></p>
         <span>Balance: {balance}SOL</span>
     </div>
-  );
+      )
+    }
+  }
   
   const ColoredLine = ({ color }) => (
     <hr
