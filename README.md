@@ -111,5 +111,9 @@ See the section about [deployment](https://facebook.github.io/create-react-app/d
 
       anchor deploy
 
+  Final:
+
+     Copy the content of myepicproject/target/idl/myepicproject.json and paste it into src/idl.json file
+
 
     
