@@ -7,6 +7,11 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 In the project directory, you can run:
 ### `npm install`
 
+*****src/app.js/221 replace the address with admin wallet public key
+*****To airdrop some sol into the admin wallet in the devnet (make sure that you install the solana env in the ubuntu)
+
+      solana airdrop 2 <public key> --url devnet
+
 ### `npm start`
 
 Runs the app in the development mode.\
