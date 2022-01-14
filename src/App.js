@@ -2,21 +2,19 @@ import './App.css';
 import React, {  useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Logo from './logo';
-import {  Navbar,Nav,Button, Col ,Row} from 'react-bootstrap';
+import { Button, Col ,Row} from 'react-bootstrap';
+
 import Container from 'react-bootstrap/Container';
 import Left from './images/left.png';
 import Right from './images/right.png';
-import Vs from './images/vs.jpeg';
+import Vs from './images/vs.png';
 import kp from './keypair.json';
 import admin_kp from './Adminkeypair.json';
-import 'react-notifications/lib/notifications.css';
-import {NotificationContainer, NotificationManager} from 'react-notifications';
+
 import idl from './idl.json';
+import adminWallet from './env.json';
 import { Connection,  clusterApiUrl, PublicKey } from '@solana/web3.js';
 import { Program, Provider, web3 } from '@project-serum/anchor';
-require('dotenv').config();
-
-
 const { SystemProgram, Keypair, LAMPORTS_PER_SOL } = web3;
 
 // Create a keypair for the account that will hold the betting data.
@@ -50,7 +48,8 @@ function App() {
   const [balance, getWalletBalance] = useState(null); // total sol amount of user's wallet
   const [pool_bal,getPoolWalletBalance] = useState(null); // total sol amount of poolWallet
   const [pred, setPrediction] = useState(null); // predection that user bets
-  const [claimFunds, setClaimFunds] = useState(1);
+  const [claimFunds, setClaimFunds] = useState(1);//set the amount of claim and deposit
+  const [adminWalletAddress, setAdminWallet] = useState(null);
   //check if the phantom wallet is connected
   const checkIfWalletIsConnected = async () => {
     try {
@@ -61,6 +60,7 @@ function App() {
           const response = await solana.connect();
           setWalletAddress(response.publicKey.toString());
           setPoolWalletAddress(adminAccount.publicKey.toString());
+          setAdminWallet(adminWallet.ADMIN_WALLET_ADDRESS);
         }
       } else {
         alert('Solana object not found! Get a Phantom Wallet 👻');
@@ -70,9 +70,19 @@ function App() {
     }
   };
 
+  const disconnectWallet = async () => {
+    // @ts-ignore
+    const { solana } = window;
+
+    if (walletAddress && solana) {
+      await (solana).disconnect();
+      setWalletAddress(null);
+    }
+  };
+
   const connectWallet = async () => {
-    console.log(adminAccount.publicKey.toString());
-    console.log(baseAccount.publicKey.toString());
+    // console.log(adminAccount.publicKey.toString());
+    // console.log(baseAccount.publicKey.toString());
     await checkIfWalletIsConnected();
     await getBalance();
     // const provider = getProvider();
@@ -167,17 +177,69 @@ function App() {
     } else {
       alert("fail");
     }
+    setPrediction(null);
 
   }
 
   const renderNotConnectedContainer = () => (
-    <Button variant="outline-success"
-      onClick={connectWallet}
-    >
-      Connect  Wallet
-    </Button>
+    <div className='right-buttons'>
+      <div className="vl"></div>
+      <button className="connect" onClick={connectWallet}>Connect</button>
+    </div>
   );
   
+  const renderConnectedContainer =  () => {
+    const provider = getProvider();
+    if (adminWalletAddress === provider.wallet.publicKey.toString()){
+      return (
+        <div className='right-buttons'>
+          <div className="vl"></div>
+          <input type="text" className="connect amount" value = {claimFunds} onChange = {(e) => setClaimFunds(e.target.value)}/>
+          <button className="connect deposit"  onClick={() => depositfund()}>Deposit</button>
+          <button className="connect claim"  onClick={() => claimfund()} >Claim</button>
+          <button className="connect" onClick={() => disconnectWallet()} >Disconnect</button>
+        </div>
+      );
+    } else {
+      return(
+        <div className='right-buttons'>
+          <div className="vl"></div>
+          <button className="connect" onClick={() => disconnectWallet()}>Disconnect</button>
+        </div>
+      );
+    }
+  }
+
+  const renderwallet = () => {
+    const provider = getProvider();
+    console.log(provider.wallet.publicKey.toString());
+    if ( provider.wallet.publicKey.toString() === adminWalletAddress){
+      return (
+        <div className='wallet'>
+          <Row>
+            <Col md={3}>
+              <h3>Wallet: {walletAddress}</h3>
+              <h3>Balance: {balance}SOL</h3>
+            </Col>
+            <Col md={6}/>
+            <Col md={3}>
+              <h3>Platform: {poolWalletAddress}</h3>
+              <h3>Balance: {pool_bal}SOL</h3>
+            </Col>
+          </Row>
+        </div>
+      );
+    } else{
+        return(
+          <div className='wallet'>
+            <h3>Wallet: {walletAddress}</h3>
+            <h3>Balance: {balance}SOL</h3>
+          </div>
+        );
+    }
+
+    
+  }
 
 
   const depositfund = async () => {
@@ -216,140 +278,74 @@ function App() {
     alert("success");
   }
 
-  const renderConnectedContainer =  () => {
-    const provider = getProvider();
-    if ('25vD2PRXZwozg4ySP1sX3WTSwLkasdJ4eosNPk1zi38V' !== provider.wallet.publicKey.toString()){
-      return (
-        <Container>
-          <Row>
-            <Col md={4}>
-              <div className="wallet">
-                  <span>wallet: {walletAddress}</span>
-                  <p></p>
-                  <span>Balance: {balance}SOL</span>
-              </div>
-            </Col>
-            <Col md={4}/>
-            <Col md={4}>
-              <div className="poolwallet">
-                  <span>Platform: {poolWalletAddress}</span>
-                  <p></p>
-                  <span>Balance: {pool_bal}SOL</span>
-              </div>
-            </Col>
-          </Row>
-        </Container>
-      );
-    } else {
-      return(
-        <Container>
-          <Row>
-            <Col md={4}>
-              <div className="wallet">
-                  <span>Platform: {poolWalletAddress}</span>
-                  <p></p>
-                  <span>Balance: {pool_bal}SOL</span>
-              </div>
-            </Col>  
-            <Col md={4}/>
-            <Col md={4}>
-              <div className="poolwallet">
-                  <span>Amount: <input type="text"  value = {claimFunds} onChange = {(e) => setClaimFunds(e.target.value)}/></span>
-                  <p></p>
-                  <Button variant="outline-success"  onClick={() => depositfund()}>Deposit funds</Button>
-                  <Button variant="outline-success"  onClick={() => claimfund()}>Claim funds</Button>
-              </div>
-            </Col>
-          </Row>
-          </Container>
-      );
-    }
-
-  }
-
-  
-  const ColoredLine = ({ color }) => (
-    <hr
-        style={{
-            color: color,
-            backgroundColor: color,
-            height: 1
-        }}
-    />
-  );
 
   const imageClick = (pred) => {
     setPrediction(pred);
   }
 
   return (
-    <div>
-      <Navbar variant="light" expand="lg" sticky="top">
-            <Container>
-                <Navbar.Brand ><Logo/></Navbar.Brand>
-                <Navbar.Toggle aria-controls="navbarScroll" />
-                <Navbar.Collapse id="navbarScroll">
-                    <Nav className="me-auto my-2 my-lg-0"
-                         style={{ maxHeight: '100px' }}
-                         navbarScroll
-                    >
-                        <Nav.Link href="/">Home</Nav.Link>
-                        <Nav.Link href="/">Roadmap</Nav.Link>
-                        <Nav.Link href="/">Arena</Nav.Link>
-                    </Nav>
-                    {!walletAddress && renderNotConnectedContainer()}
-                </Navbar.Collapse>
-            </Container>
-        </Navbar>
-        <ColoredLine color="black" />
-        {walletAddress && renderConnectedContainer()}
-        <Container className="block">
-          <Row>
-            <Col md={4}> <hr /></Col>
-            <Col md={4} className="text"><span>Zankoku Arena</span></Col>
-            <Col md={4}><hr/></Col>
-          </Row>
-        </Container>
-        <div className='bet'>
-          <Container>
-            <Row>
-              <Col md={4}><img src={Left} alt="left" height="200" onClick={() => imageClick(0)}/></Col>
-              <Col md={4}><img src={Vs} alt="vs" height="150" /></Col>
-              <Col md={4}><img src={Right} alt="right" height="200" onClick={() => imageClick(1)}/></Col>
-            </Row>
-            <Row>
-              <Col md={2}></Col>
-              <Col md={8}>
-                <Row>
-                  <Col md={4}>
-                    <Button  variant="outline-success" onClick={() => setSelectedStakeBalance(0.05)} >0.05 SOL</Button>
-                  </Col>
-                  <Col md={4}>
-                    <Button variant="outline-success" onClick={() => setSelectedStakeBalance(0.10)} >0.10 SOL</Button>
-                  </Col>
-                  <Col md={4}>
-                    <Button variant="outline-success" onClick={() => setSelectedStakeBalance(0.25)} >0.25 SOL</Button>
-                  </Col>
-                </Row>
-                <br></br>
-                <Row>
-                  <Col md={4}>
-                    <Button variant="outline-success" onClick={() => setSelectedStakeBalance(0.50)} >0.50 SOL</Button>
-                  </Col>
-                  <Col md={4}>
-                    <Button variant="outline-success" onClick={() => setSelectedStakeBalance(1)} >1.00SOL</Button>
-                  </Col>
-                  <Col md={4}>
-                    <Button variant="outline-success" onClick={() => setSelectedStakeBalance(2)} >2.00SOL</Button>
-                  </Col>
-                </Row>
-                <hr/>
-                <Button variant="outline-primary" onClick={() => placeBet()} >Start Battle</Button>
-              </Col>
-              <Col md={2}></Col>
-            </Row>
-          </Container>
+    <div style={{ backgroundImage: "url(/background.png)" }}>
+      <div className='nav'>
+        <Logo/>
+        <div className='tab-container'>
+            <div className='tab '><span>Home</span></div>
+            <div className='tab activeTab'>Roadmap</div>
+            <div className='tab'>Arena</div>
         </div>
+        {!walletAddress && renderNotConnectedContainer()}
+        {walletAddress && renderConnectedContainer()}
+      </div>
+      <div className='lower-content'>
+        {walletAddress && renderwallet()}
+        <div className='game'>
+          <h1 className='title'>
+            <Row>
+              <Col md={4}><hr/></Col>
+              <Col md={4}><span>Zankoku Arena</span></Col>
+              <Col md={4}><hr/></Col>
+            </Row>
+          </h1>
+          <div className='content'>
+            <div className='content-top'>
+              <Row>
+                <Col md={4}>
+                  {pred===0?<img className='active' id="left" src={Left} alt="left" height="200" onClick={() => imageClick(0)}/>:<img src={Left} id="left" alt="left" height="200" onClick={() => imageClick(0)}/>}
+                  </Col>
+                <Col md={4}><img className="vs" src={Vs} alt="vs" height="100" /></Col>
+                <Col md={4}>{pred===1?<img className='active' id="right" src={Right} alt="Right" height="200" onClick={() => imageClick(1)}/>:<img src={Right} id="right" alt="Right" height="200" onClick={() => imageClick(1)}/>}
+                </Col>
+              </Row>
+            </div>
+            <div className='content-bottom'>
+              <Row>
+                <Col md={4}>
+                  <Button  variant="outline-success" onClick={() => setSelectedStakeBalance(0.05)} >0.05 SOL</Button>
+                </Col>
+                <Col md={4}>
+                  <Button variant="outline-success" onClick={() => setSelectedStakeBalance(0.10)} >0.10 SOL</Button>
+                </Col>
+                <Col md={4}>
+                  <Button variant="outline-success" onClick={() => setSelectedStakeBalance(0.25)} >0.25 SOL</Button>
+                </Col>
+              </Row>
+              <br></br>
+              <Row>
+                <Col md={4}>
+                  <Button variant="outline-success" onClick={() => setSelectedStakeBalance(0.50)} >0.50 SOL</Button>
+                </Col>
+                <Col md={4}>
+                  <Button variant="outline-success" onClick={() => setSelectedStakeBalance(1)} >1.00SOL</Button>
+                </Col>
+                <Col md={4}>
+                  <Button variant="outline-success" onClick={() => setSelectedStakeBalance(2)} >2.00SOL</Button>
+                </Col>
+              </Row>
+              <hr/>
+              <Button variant="outline-info" onClick={() => placeBet()} >Start Battle</Button>  
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

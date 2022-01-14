@@ -7,11 +7,15 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 In the project directory, you can run:
 ### `npm install`
 
-*****src/app.js/221 replace the address with admin wallet public key
-*****To airdrop some sol into the admin wallet in the devnet (make sure that you install the solana env in the ubuntu)
+  Add admin's phantom wallet pubkey into the src/env.json
 
-      solana airdrop 2 <public key> --url devnet
+  If necessary, please airdrop sol into your wallet
 
+    - solana airdrop 2 <wallet pubkey> --url devnet
+    - or deposit from another wallet
+    - make sure that you installed the solana env to use the first command
+
+  Set the network into devnet
 ### `npm start`
 
 Runs the app in the development mode.\
@@ -35,10 +39,9 @@ Your app is ready to be deployed!
 
 See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
-# How to deploy the Program
+# How to deploy the smart contract 
 
 ## install the solana env
-
  1. Installing Rust
     
     $ curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
@@ -80,7 +83,6 @@ See the section about [deployment](https://facebook.github.io/create-react-app/d
   Now, we need to change some variables in Anchor.toml. This is where it gets a little tricky.
   In Anchor.toml, change [programs.localnet] to [programs.devnet].
   Then, change cluster = "localnet" to cluster = "devnet".
-  
   Now, run:
 
     anchor build
@@ -103,15 +105,11 @@ See the section about [deployment](https://facebook.github.io/create-react-app/d
 
   Finally, once you do all this we need to run the build command again:
 
-    anchor build
+      anchor build
 
   🚀 Deploy to devnet!
 
-    anchor deploy
+      anchor deploy
 
 
-
-## Making IDL file
-    when you build the program, you can find the idl file in the myepicproject/target/idl
-    please copy the content of idl json file and paste it into src/idl.json
     

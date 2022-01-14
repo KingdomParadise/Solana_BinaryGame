@@ -74,7 +74,7 @@ pub mod myepicproject {
         let p :&BetStruct = &base_account.current_bet;
 
         if p.bool_winner == true {
-            let transfer_amount = 2 * p.stake_bal as u64;
+            let transfer_amount = 192 * p.stake_bal as u64 / 100;
             
             if transfer_amount > 0 {
                 let ix = &transfer(
