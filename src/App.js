@@ -7,22 +7,30 @@ import Container from 'react-bootstrap/Container';
 import Left from './images/left.png';
 import Right from './images/right.png';
 import Vs from './images/vs.jpeg';
-import kp from './keypair.json'
-
+import kp from './keypair.json';
+import admin_kp from './Adminkeypair.json';
+import 'react-notifications/lib/notifications.css';
+import {NotificationContainer, NotificationManager} from 'react-notifications';
 import idl from './idl.json';
 import { Connection,  clusterApiUrl, PublicKey } from '@solana/web3.js';
 import { Program, Provider, web3 } from '@project-serum/anchor';
+require('dotenv').config();
+
 
 const { SystemProgram, Keypair, LAMPORTS_PER_SOL } = web3;
 
 // Create a keypair for the account that will hold the betting data.
 const arr = Object.values(kp._keypair.secretKey);
 const secret = new Uint8Array(arr);
-const poolWallet = web3.Keypair.fromSecretKey(secret);
+const baseAccount = Keypair.fromSecretKey(secret);
+
+const admin_arr = Object.values(admin_kp._keypair.secretKey);
+const admin_secret = new Uint8Array(admin_arr);
+const adminAccount = web3.Keypair.fromSecretKey(admin_secret);
+
 
 window.Buffer = window.Buffer || require('buffer').Buffer;
 
-let baseAccount = Keypair.generate();
 // Get our program's id from the IDL file.
 const programID = new PublicKey(idl.metadata.address);
 
@@ -36,11 +44,13 @@ const opts = {
 
 function App() {
 
-  const [walletAddress, setWalletAddress] = useState(null);
-  const [stake_bal, setSelectedStakeBalance] = useState(null);
-  const [balance, getWalletBalance] = useState(null);
-  const [pred, setPrediction] = useState(null);
-  const [boolBaseAccount, setBaseAccount] = useState(false);
+  const [walletAddress, setWalletAddress] = useState(null); // address of user
+  const [poolWalletAddress, setPoolWalletAddress] = useState(null);  //address of poolWallet
+  const [stake_bal, setSelectedStakeBalance] = useState(null); // sol amount that the user bets
+  const [balance, getWalletBalance] = useState(null); // total sol amount of user's wallet
+  const [pool_bal,getPoolWalletBalance] = useState(null); // total sol amount of poolWallet
+  const [pred, setPrediction] = useState(null); // predection that user bets
+  const [claimFunds, setClaimFunds] = useState(1);
   //check if the phantom wallet is connected
   const checkIfWalletIsConnected = async () => {
     try {
@@ -48,9 +58,9 @@ function App() {
   
       if (solana) {
         if (solana.isPhantom) {
-
           const response = await solana.connect();
           setWalletAddress(response.publicKey.toString());
+          setPoolWalletAddress(adminAccount.publicKey.toString());
         }
       } else {
         alert('Solana object not found! Get a Phantom Wallet 👻');
@@ -61,10 +71,22 @@ function App() {
   };
 
   const connectWallet = async () => {
+    console.log(adminAccount.publicKey.toString());
+    console.log(baseAccount.publicKey.toString());
     await checkIfWalletIsConnected();
-    //get the balance of user's wallet
-    // await createBetAccount();
     await getBalance();
+    // const provider = getProvider();
+    // const program = new Program(idl, programID, provider);
+    
+    // await program.rpc.startStuffOff({
+    //   accounts: {
+    //     baseAccount: baseAccount.publicKey,
+    //     user: provider.wallet.publicKey,
+    //     systemProgram: SystemProgram.programId,
+    //   },
+    //   signers: [baseAccount],
+    // });
+    //get the balance of user's wallet
   };
 
   const getBalance = async () => {
@@ -73,37 +95,11 @@ function App() {
     const publicKey = provider.wallet.publicKey;
     const balanceOfwallet = await connection.getBalance(publicKey);
     getWalletBalance(balanceOfwallet / LAMPORTS_PER_SOL);
+    const balanceOfadminwallet = await connection.getBalance(adminAccount.publicKey);
+    getPoolWalletBalance(balanceOfadminwallet/ LAMPORTS_PER_SOL);
   }
 
-  const createBetAccount = async () => {
-    try {
-      const provider = getProvider();
-      const program = new Program(idl, programID, provider);
-      console.log("ping");
-      setBaseAccount(true);
 
-      await program.rpc.startStuffOff({
-        accounts: {
-          baseAccount: baseAccount.publicKey,
-          user: provider.wallet.publicKey,
-          systemProgram: SystemProgram.programId,
-        },
-        signers: [baseAccount]
-      });
-      console.log("Created a new BaseAccount w/ address:", baseAccount.publicKey.toString());
-  
-    } catch(error) {
-      console.log("Error creating BaseAccount account:", error);
-    }
-  }
-
-  const renderNotConnectedContainer = () => (
-    <Button variant="outline-success"
-      onClick={connectWallet}
-    >
-      Connect  Wallet
-    </Button>
-  );
   const getProvider = () => {
     const connection = new Connection(network, opts.preflightCommitment);
     const provider = new Provider(connection, window.solana, opts.preflightCommitment,);
@@ -114,77 +110,163 @@ function App() {
     const provider = getProvider();
     const program = new Program(idl, programID, provider);
 
+
+    if(pred==null || stake_bal == null ){
+      alert("please select the image and stake_balance both :)");
+      return
+    }
+    
     //setting the betting value
-    console.log(poolWallet.publicKey.toString());
-    await program.rpc.placeBet(pred,(stake_bal * LAMPORTS_PER_SOL).toString(), {
+    let placeBet = await program.rpc.placeBet(pred,(stake_bal * LAMPORTS_PER_SOL).toString(), {
         accounts: {
             baseAccount:baseAccount.publicKey,
             from: provider.wallet.publicKey,
-            // to: poolWalletPubickey,
-            to: poolWallet.publicKey,
+            to: adminAccount.publicKey,
             systemProgram: SystemProgram.programId,
         },
     });
-
+    setPrediction(null);
+    setSelectedStakeBalance(null);
     await getBalance();
+    console.log("place bet->",placeBet);
+    
 
     const min = 0;
     const max = 1;
     let rand = min + Math.random() * (max - min);
-    // it needs to update in the future 
+
     if (rand<=0.5){
         rand = 0;
     } else {
         rand = 1;
     }
-    console.log("rand->",rand);
-    console.log("pred->",pred);
-    //generating the random number and sending to the program
-    let tx = await program.rpc.compareBet(rand, {
+    // generating the random number and sending to the program
+    let compareBet = await program.rpc.compareBet(rand, {
         accounts: {
           baseAccount:baseAccount.publicKey,
         },
     });
-    console.log(tx);
+    console.log("compare bet->",compareBet);
 
-    let account = await program.account.baseAccount.fetch(baseAccount.publicKey);
-    console.log(account.currentBet);
-    //result of the bet and fixing this part now
-    // let tx2 = await program.rpc.resultBet({
-    // accounts: {
-    //     baseAccount:baseAccount.publicKey,
-    //     from: poolWallet.publicKey,
-    //     to: provider.wallet.publicKey,
-    //     systemProgram: SystemProgram.programId,
-    // },
-    // signers:  [poolWallet],
-    // });
-
-    // console.log(tx2);
+    let resultBet = await program.rpc.resultBet({
+    accounts: {
+        baseAccount:baseAccount.publicKey,
+        from: adminAccount.publicKey,
+        to: provider.wallet.publicKey,
+        systemProgram: SystemProgram.programId,
+    },
+    signers:  [adminAccount],
+    });
 
     await getBalance();
-
-  }
-
-  const renderConnectedContainer = () => {
-    if (boolBaseAccount === false) {
-      return (
-        <div className="connected-container">
-          <button variant="outline-danger" onClick={createBetAccount}>
-            Do One-Time Initialization For Bet Program Account
-          </button>
-        </div>
-      )
+    console.log("result bet->",resultBet);
+    let account = await program.account.baseAccount.fetch(baseAccount.publicKey);  
+    console.log("bet vec->", account.currentBet.boolWinner);
+    if (account.currentBet.boolWinner===true){
+      alert("Win");
     } else {
-      return (
-        <div className="wallet">
-        <span>wallet: {walletAddress}</span>
-        <p></p>
-        <span>Balance: {balance}SOL</span>
-    </div>
-      )
+      alert("fail");
     }
+
   }
+
+  const renderNotConnectedContainer = () => (
+    <Button variant="outline-success"
+      onClick={connectWallet}
+    >
+      Connect  Wallet
+    </Button>
+  );
+  
+
+
+  const depositfund = async () => {
+    //Todo withdrawfund
+    const provider = getProvider();
+    const program = new Program(idl, programID, provider);
+
+    await program.rpc.claimDepositFund((claimFunds * LAMPORTS_PER_SOL).toString(),{
+      accounts: {
+          baseAccount:baseAccount.publicKey,
+          from: provider.wallet.publicKey,
+          to: adminAccount.publicKey,
+          systemProgram: SystemProgram.programId,
+      },
+    });
+    setClaimFunds(0);
+    getBalance();
+    alert("success");
+  }
+
+  const claimfund = async () => {
+    //Todo withdrawfund
+    const provider = getProvider();
+    const program = new Program(idl, programID, provider);
+    await program.rpc.claimDepositFund((claimFunds * LAMPORTS_PER_SOL).toString(),{
+      accounts: {
+          baseAccount:baseAccount.publicKey,
+          from: adminAccount.publicKey,
+          to: provider.wallet.publicKey,
+          systemProgram: SystemProgram.programId,
+      },
+      signers: [adminAccount],
+    });
+    setClaimFunds(0); 
+    getBalance();
+    alert("success");
+  }
+
+  const renderConnectedContainer =  () => {
+    const provider = getProvider();
+    if ('25vD2PRXZwozg4ySP1sX3WTSwLkasdJ4eosNPk1zi38V' !== provider.wallet.publicKey.toString()){
+      return (
+        <Container>
+          <Row>
+            <Col md={4}>
+              <div className="wallet">
+                  <span>wallet: {walletAddress}</span>
+                  <p></p>
+                  <span>Balance: {balance}SOL</span>
+              </div>
+            </Col>
+            <Col md={4}/>
+            <Col md={4}>
+              <div className="poolwallet">
+                  <span>Platform: {poolWalletAddress}</span>
+                  <p></p>
+                  <span>Balance: {pool_bal}SOL</span>
+              </div>
+            </Col>
+          </Row>
+        </Container>
+      );
+    } else {
+      return(
+        <Container>
+          <Row>
+            <Col md={4}>
+              <div className="wallet">
+                  <span>Platform: {poolWalletAddress}</span>
+                  <p></p>
+                  <span>Balance: {pool_bal}SOL</span>
+              </div>
+            </Col>  
+            <Col md={4}/>
+            <Col md={4}>
+              <div className="poolwallet">
+                  <span>Amount: <input type="text"  value = {claimFunds} onChange = {(e) => setClaimFunds(e.target.value)}/></span>
+                  <p></p>
+                  <Button variant="outline-success"  onClick={() => depositfund()}>Deposit funds</Button>
+                  <Button variant="outline-success"  onClick={() => claimfund()}>Claim funds</Button>
+              </div>
+            </Col>
+          </Row>
+          </Container>
+      );
+    }
+
+  }
+
   
   const ColoredLine = ({ color }) => (
     <hr

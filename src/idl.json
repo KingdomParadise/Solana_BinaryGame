@@ -99,6 +99,37 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "claimDepositFund",
+      "accounts": [
+        {
+          "name": "baseAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "from",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "to",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "transferAmount",
+          "type": "string"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -112,18 +143,6 @@
             "type": {
               "defined": "BetStruct"
             }
-          }
-        ]
-      }
-    },
-    {
-      "name": "PoolWallet",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "balance",
-            "type": "u64"
           }
         ]
       }
@@ -156,6 +175,6 @@
     }
   ],
   "metadata": {
-    "address": "BNJfUqcwqXPm8t5hHnTJzZ9tm4HrjrXVE7xzq3XbceBs"
+    "address": "3ApnWu45r8knFMJ1fT1htxqSMTEG5Jc9Zf14nHHAG3tG"
   }
 }

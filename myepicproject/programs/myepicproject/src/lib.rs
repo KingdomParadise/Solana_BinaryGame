@@ -2,12 +2,12 @@ use anchor_lang::prelude::*;
 use anchor_lang::Account;
 
 
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("3ApnWu45r8knFMJ1fT1htxqSMTEG5Jc9Zf14nHHAG3tG");
 
 #[program]
 pub mod myepicproject {
     
-    use anchor_lang::solana_program::{program::invoke,program::invoke_unchecked, system_instruction::transfer};
+    use anchor_lang::solana_program::{program::invoke,system_instruction::transfer};
     use super::*;
 
     pub fn start_stuff_off(ctx: Context<StartStuffOff>) -> ProgramResult {
@@ -21,6 +21,7 @@ pub mod myepicproject {
         //Build the struct.
         let pred: u8 = pred;
         let stake_bal: u64 = str_stake_bal.parse().unwrap();
+
 
 
         let bet_item = BetStruct {
@@ -93,6 +94,35 @@ pub mod myepicproject {
         
         Ok(())
     }
+
+    pub fn claim_deposit_fund(ctx: Context<SendSol>, transfer_amount: String) -> ProgramResult {
+
+        let base_account = &mut ctx.accounts.base_account;
+
+
+        let stake_bal: u64 = transfer_amount.parse().unwrap();
+
+        let total_amount = stake_bal as u64;
+       
+        if total_amount > 0 {
+            let ix = &transfer(
+                &ctx.accounts.from.key(),
+                &ctx.accounts.to.key(),
+                total_amount
+            );
+            invoke(
+                &ix,
+                &[
+                    ctx.accounts.from.to_account_info(),
+                    ctx.accounts.to.to_account_info()
+                ]
+            );
+        }
+        
+        Ok(())
+                                                                                                                                                                
+    }
+
 }
 
 #[derive(Accounts)]
@@ -143,7 +173,3 @@ pub struct BaseAccount {
     pub current_bet: BetStruct,
 }
 
-#[account]
-pub struct PoolWallet{
-    pub balance: u64 
-} 
