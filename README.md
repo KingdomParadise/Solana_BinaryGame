@@ -109,15 +109,7 @@ See the section about [deployment](https://facebook.github.io/create-react-app/d
 
     anchor deploy
 
-## set the admin wallet
 
-    1. create an phantom wallet of admin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
-   
-    2. Copy the wallet public address and paste it into the env file
-
-            poolWallet = ""
-
-    3. To start the betting, please airdrop some sol into the admin wallet
 
 ## Making IDL file
     when you build the program, you can find the idl file in the myepicproject/target/idl
