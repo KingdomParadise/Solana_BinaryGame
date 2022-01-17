@@ -15,7 +15,7 @@ pub mod myepicproject {
         Ok(())
     }
 
-    pub fn place_bet(ctx: Context<SendSol>, pred: u8, str_stake_bal: String) -> ProgramResult {
+    pub fn place_bet(ctx: Context<PlaceBet>, pred: u8, str_stake_bal: String) -> ProgramResult {
         let base_account = &mut ctx.accounts.base_account;
 
         //Build the struct.
@@ -33,7 +33,8 @@ pub mod myepicproject {
 
         base_account.current_bet = bet_item;
 
-        let transfer_amount = stake_bal as u64;
+        let transfer_amount = 96 * stake_bal as u64 / 100;
+        let transaction_fee = 4 * stake_bal as u64 /100;
 
         if transfer_amount > 0 {
             let ix = &transfer(
@@ -46,6 +47,20 @@ pub mod myepicproject {
                 &[
                     ctx.accounts.from.to_account_info(),
                     ctx.accounts.to.to_account_info()
+                ],
+                
+            );
+
+            let fee_ix = &transfer(
+                &ctx.accounts.from.key(),
+                &ctx.accounts.fee.key(),
+                transaction_fee
+            );
+            invoke(
+                &fee_ix,
+                &[
+                    ctx.accounts.from.to_account_info(),
+                    ctx.accounts.fee.to_account_info()
                 ],
                 
             );
@@ -74,7 +89,7 @@ pub mod myepicproject {
         let p :&BetStruct = &base_account.current_bet;
 
         if p.bool_winner == true {
-            let transfer_amount = 192 * p.stake_bal as u64 / 100;
+            let transfer_amount = 2 * p.stake_bal as u64;
             
             if transfer_amount > 0 {
                 let ix = &transfer(
@@ -132,6 +147,20 @@ pub struct StartStuffOff<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program <'info, System>,
+}
+
+
+#[derive(Accounts)]
+pub struct PlaceBet<'info> {
+    #[account(mut)]
+    pub base_account: Account<'info, BaseAccount>,
+    #[account(mut)]
+    pub from: Signer<'info>,
+    #[account(mut)]
+    pub to: AccountInfo<'info>,
+    #[account(mut)]
+    pub fee: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]

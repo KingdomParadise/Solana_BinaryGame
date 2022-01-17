@@ -42,6 +42,11 @@
           "isSigner": false
         },
         {
+          "name": "fee",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false

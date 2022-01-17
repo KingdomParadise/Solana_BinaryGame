@@ -26,6 +26,7 @@ const admin_arr = Object.values(admin_kp._keypair.secretKey);
 const admin_secret = new Uint8Array(admin_arr);
 const adminAccount = web3.Keypair.fromSecretKey(admin_secret);
 
+const transactionWallet = new PublicKey(adminWallet.TRANSACTION_WALLET_ADDRESS);
 
 window.Buffer = window.Buffer || require('buffer').Buffer;
 
@@ -127,19 +128,6 @@ function App() {
     }
     
     //setting the betting value
-    let placeBet = await program.rpc.placeBet(pred,(stake_bal * LAMPORTS_PER_SOL).toString(), {
-        accounts: {
-            baseAccount:baseAccount.publicKey,
-            from: provider.wallet.publicKey,
-            to: adminAccount.publicKey,
-            systemProgram: SystemProgram.programId,
-        },
-    });
-    setPrediction(null);
-    setSelectedStakeBalance(null);
-    await getBalance();
-    console.log("place bet->",placeBet);
-    
 
     const min = 0;
     const max = 1;
@@ -150,14 +138,33 @@ function App() {
     } else {
         rand = 1;
     }
-    // generating the random number and sending to the program
+    
+    //place bet
+    let placeBet = await program.rpc.placeBet(pred,(stake_bal * LAMPORTS_PER_SOL).toString(), {
+        accounts: {
+            baseAccount:baseAccount.publicKey,
+            from: provider.wallet.publicKey,
+            to: adminAccount.publicKey,
+            fee: transactionWallet,
+            systemProgram: SystemProgram.programId,
+        },
+    });
+    setPrediction(null);
+    setSelectedStakeBalance(null);
+    await getBalance();
+    console.log("place bet->",placeBet);
+    
+
+    
+    // compare the bet
     let compareBet = await program.rpc.compareBet(rand, {
         accounts: {
           baseAccount:baseAccount.publicKey,
         },
     });
     console.log("compare bet->",compareBet);
-
+    
+    //result of the bet
     let resultBet = await program.rpc.resultBet({
     accounts: {
         baseAccount:baseAccount.publicKey,

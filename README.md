@@ -7,7 +7,8 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 In the project directory, you can run:
 ### `npm install`
 
-  Add admin's phantom wallet pubkey into the src/env.json
+  Add admin's phantom wallet pubkey into the src/env.json -  ADMIN_WALLET_ADDRESS
+  Add transaction fee phantom wallet pubkey into the src/env.json - TRANSACTION_WALLET_ADDRESS
 
   If necessary, please airdrop sol into your wallet
 
